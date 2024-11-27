@@ -27,6 +27,7 @@ import sys
 import random
 import Experiments
 import Util
+from HHCRSP import HHCRSP
 
 description = 'Linkage Tree Genetic Algorithms: Variants and Analysis code'
 parser = argparse.ArgumentParser(description=description)
@@ -57,32 +58,35 @@ parser.add_argument('-d', dest='dimensions', type=int,
 if __name__ == '__main__':
     args = parser.parse_args()
     config = Util.loadConfigurations(args.configs)
-    config['verbose'] = args.verbose
+    config['hhcrsp'] = HHCRSP(config)
 
-    if 'seed' not in config:
-        config['seed'] = random.randint(0, sys.maxint)
-    random.seed(config['seed'])
+    print(str(config['hhcrsp']))
+    # config['verbose'] = args.verbose
 
-    if args.popSize != None:
-        config['popSize'] = args.popSize
+    # if 'seed' not in config:
+    #     config['seed'] = random.randint(0, sys.maxint)
+    # random.seed(config['seed'])
 
-    if args.dimensions != None:
-        config['dimensions'] = args.dimensions
+    # if args.popSize != None:
+    #     config['popSize'] = args.popSize
 
-    if 'popSize' not in config or args.bisection:
-        if args.verbose:
-            print 'Using bisection to determine minimum population size'
-        Experiments.bisection(config)
+    # if args.dimensions != None:
+    #     config['dimensions'] = args.dimensions
 
-    try:
-        rawResults = Experiments.fullRun(config)
-        combinedResults = Experiments.combineResults(rawResults)
+    # if 'popSize' not in config or args.bisection:
+    #     if args.verbose:
+    #         print 'Using bisection to determine minimum population size'
+    #     Experiments.bisection(config)
 
-        print combinedResults
-    except KeyError as e:
-        print 'You must include a configuration value for', e.args[0]
+    # try:
+    #     rawResults = Experiments.fullRun(config)
+    #     combinedResults = Experiments.combineResults(rawResults)
 
-    if args.output_results != None:
-        Util.saveList(args.output_results, [combinedResults] + rawResults)
-    if args.output_config != None:
-        Util.saveConfiguration(args.output_config, config)
+    #     print combinedResults
+    # except KeyError as e:
+    #     print 'You must include a configuration value for', e.args[0]
+
+    # if args.output_results != None:
+    #     Util.saveList(args.output_results, [combinedResults] + rawResults)
+    # if args.output_config != None:
+    #     Util.saveConfiguration(args.output_config, config)

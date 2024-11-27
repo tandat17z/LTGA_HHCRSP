@@ -67,51 +67,51 @@ class LTGA(object):
             lookup[mask] = result
             return result
 
-    def clusterDistance(self, c1, c2, lookup):
-        '''
-        Calculates the true entropic distance between two clusters of genes.
+    # def clusterDistance(self, c1, c2, lookup):
+    #     '''
+    #     Calculates the true entropic distance between two clusters of genes.
 
-        Parameters:
+    #     Parameters:
 
-        - ``c1``: The first cluster.
-        - ``c2``: The second cluster.
-        - ``lookup``: A dictionary mapping cluster pairs to their previously
-          found distances.  Should be reset if the population changes.
-        '''
-        try:
-            return lookup[c1, c2]
-        except KeyError:
-            try:
-                result = 2 - ((self.entropy(c1, lookup) +
-                               self.entropy(c2, lookup))
-                              / self.entropy(c1 + c2, lookup))
-            except ZeroDivisionError:
-                result = 2  # Zero division only happens in 0/0
-            lookup[c1, c2] = result
-            lookup[c2, c1] = result
-            return result
+    #     - ``c1``: The first cluster.
+    #     - ``c2``: The second cluster.
+    #     - ``lookup``: A dictionary mapping cluster pairs to their previously
+    #       found distances.  Should be reset if the population changes.
+    #     '''
+    #     try:
+    #         return lookup[c1, c2]
+    #     except KeyError:
+    #         try:
+    #             result = 2 - ((self.entropy(c1, lookup) +
+    #                            self.entropy(c2, lookup))
+    #                           / self.entropy(c1 + c2, lookup))
+    #         except ZeroDivisionError:
+    #             result = 2  # Zero division only happens in 0/0
+    #         lookup[c1, c2] = result
+    #         lookup[c2, c1] = result
+    #         return result
 
-    def pairwiseDistance(self, c1, c2, lookup):
-        '''
-        Calculates the pairwise approximation of the entropic distance between
-        two clusters of genes.
+    # def pairwiseDistance(self, c1, c2, lookup):
+    #     '''
+    #     Calculates the pairwise approximation of the entropic distance between
+    #     two clusters of genes.
 
-        Parameters:
+    #     Parameters:
 
-        - ``c1``: The first cluster.
-        - ``c2``: The second cluster.
-        - ``lookup``: A dictionary mapping cluster pairs to their previously
-          found distances.  Should be reset if the population changes.
-        '''
-        try:
-            return lookup[c1, c2]
-        except KeyError:
-            # averages the pairwise distance between each cluster
-            result = sum(self.clusterDistance((a,), (b,), lookup)
-                         for a in c1 for b in c2) / float(len(c1) * len(c2))
-            lookup[c1, c2] = result
-            lookup[c2, c1] = result
-            return result
+    #     - ``c1``: The first cluster.
+    #     - ``c2``: The second cluster.
+    #     - ``lookup``: A dictionary mapping cluster pairs to their previously
+    #       found distances.  Should be reset if the population changes.
+    #     '''
+    #     try:
+    #         return lookup[c1, c2]
+    #     except KeyError:
+    #         # averages the pairwise distance between each cluster
+    #         result = sum(self.clusterDistance((a,), (b,), lookup)
+    #                      for a in c1 for b in c2) / float(len(c1) * len(c2))
+    #         lookup[c1, c2] = result
+    #         lookup[c2, c1] = result
+    #         return result
 
     def buildTree(self, distance):
         '''
@@ -203,78 +203,78 @@ class LTGA(object):
         return Individual([p2.genes[g] if g in maskSet else p1.genes[g]
                            for g in range(len(p1.genes))])
 
-    def twoParentCrossover(self, masks):
-        '''
-        Creates individual generator using the two parent crossover variant.
-        Uses coroutines to send out individuals and receive their fitness
-        values.  Terminates when a complete evolutionary generation has
-        finished.
+    # def twoParentCrossover(self, masks):
+    #     '''
+    #     Creates individual generator using the two parent crossover variant.
+    #     Uses coroutines to send out individuals and receive their fitness
+    #     values.  Terminates when a complete evolutionary generation has
+    #     finished.
 
-        Parameters:
+    #     Parameters:
 
-        - ``masks``: The list of crossover masks to be used when generating
-          individuals, ordered based on how they should be applied.
-        '''
-        offspring = []
-        # Does the following twice in order to make enough children
-        for _ in [0, 1]:
-            random.shuffle(self.individuals)
-            # pairs off parents with their neighbor
-            for i in xrange(0, len(self.individuals) - 1, 2):
-                p1 = self.individuals[i]
-                p2 = self.individuals[i + 1]
-                for mask in masks:
-                    c1 = self.applyMask(p1, p2, mask)
-                    c2 = self.applyMask(p2, p1, mask)
-                    # Duplicates are caught higher up
-                    c1.fitness = yield c1
-                    c2.fitness = yield c2
-                    # if the best child is better than the best parent
-                    if max(p1, p2) < max(c1, c2):
-                        p1, p2 = c1, c2
-                # Overwrite the parents with the modified version
-                self.individuals[i] = p1
-                self.individuals[i + 1] = p2
-                # The offspring is the best individual created during the cross
-                offspring.append(max(p1, p2))
-        self.individuals = offspring
+    #     - ``masks``: The list of crossover masks to be used when generating
+    #       individuals, ordered based on how they should be applied.
+    #     '''
+    #     offspring = []
+    #     # Does the following twice in order to make enough children
+    #     for _ in [0, 1]:
+    #         random.shuffle(self.individuals)
+    #         # pairs off parents with their neighbor
+    #         for i in xrange(0, len(self.individuals) - 1, 2):
+    #             p1 = self.individuals[i]
+    #             p2 = self.individuals[i + 1]
+    #             for mask in masks:
+    #                 c1 = self.applyMask(p1, p2, mask)
+    #                 c2 = self.applyMask(p2, p1, mask)
+    #                 # Duplicates are caught higher up
+    #                 c1.fitness = yield c1
+    #                 c2.fitness = yield c2
+    #                 # if the best child is better than the best parent
+    #                 if max(p1, p2) < max(c1, c2):
+    #                     p1, p2 = c1, c2
+    #             # Overwrite the parents with the modified version
+    #             self.individuals[i] = p1
+    #             self.individuals[i + 1] = p2
+    #             # The offspring is the best individual created during the cross
+    #             offspring.append(max(p1, p2))
+    #     self.individuals = offspring
 
-    def globalCrossover(self, masks):
-        '''
-        Creates individual generator using the global crossover variant.
-        Uses coroutines to send out individuals and receive their fitness
-        values.  Terminates when a complete evolutionary generation has
-        finished.
+    # def globalCrossover(self, masks):
+    #     '''
+    #     Creates individual generator using the global crossover variant.
+    #     Uses coroutines to send out individuals and receive their fitness
+    #     values.  Terminates when a complete evolutionary generation has
+    #     finished.
 
-        Parameters:
+    #     Parameters:
 
-        - ``masks``: The list of crossover masks to be used when generating
-          individuals, ordered based on how they should be applied.
-        '''
-        # Creates a dictionary to track individual's values for each mask
-        values = {mask: [] for mask in masks}
-        for mask in masks:
-            for individual in self.individuals:
-                value = self.getMaskValue(individual, mask)
-                values[mask].append(value)
-        # each individual creates a single offspring, which replaces itself
-        for individual in self.individuals:
-            for mask in masks:
-                startingValue = self.getMaskValue(individual, mask)
-                # Find the list of values in the population that differ from
-                # the current individual's values for this mask
-                options = [value for value in values[mask]
-                           if value != startingValue]
-                if len(options) > 0:
-                    value = random.choice(options)
-                    self.setMaskValues(individual, mask, value)
-                    newFitness = yield individual
-                    # if the individual improved, update fitness
-                    if individual.fitness < newFitness:
-                        individual.fitness = newFitness
-                    # The individual did not improve, revert changes
-                    else:
-                        self.setMaskValues(individual, mask, startingValue)
+    #     - ``masks``: The list of crossover masks to be used when generating
+    #       individuals, ordered based on how they should be applied.
+    #     '''
+    #     # Creates a dictionary to track individual's values for each mask
+    #     values = {mask: [] for mask in masks}
+    #     for mask in masks:
+    #         for individual in self.individuals:
+    #             value = self.getMaskValue(individual, mask)
+    #             values[mask].append(value)
+    #     # each individual creates a single offspring, which replaces itself
+    #     for individual in self.individuals:
+    #         for mask in masks:
+    #             startingValue = self.getMaskValue(individual, mask)
+    #             # Find the list of values in the population that differ from
+    #             # the current individual's values for this mask
+    #             options = [value for value in values[mask]
+    #                        if value != startingValue]
+    #             if len(options) > 0:
+    #                 value = random.choice(options)
+    #                 self.setMaskValues(individual, mask, value)
+    #                 newFitness = yield individual
+    #                 # if the individual improved, update fitness
+    #                 if individual.fitness < newFitness:
+    #                     individual.fitness = newFitness
+    #                 # The individual did not improve, revert changes
+    #                 else:
+    #                     self.setMaskValues(individual, mask, startingValue)
 
     def generate(self, initialPopulation, config):
         '''
@@ -304,6 +304,11 @@ class LTGA(object):
           - ``crossover``: The method used to generate new individuals, for
             instance ``twoParentCrossover`` and ``globalCrossover``.
         '''
+        self.dimensions = config['dimensions']
+        self.numOfShifts = config['numOfShifts']
+        self.attractionRepulsionWeight = config['attractionRepulsionWeight'] # the relative
+        self.matrixDistance = config.matrixDistanceQ
+
         self.individuals = initialPopulation
         distance = Util.classMethods(self)[config["distance"]]
         ordering = Util.classMethods(self)[config["ordering"]]
@@ -326,3 +331,101 @@ class LTGA(object):
                 currentSet == beforeGenerationSet):
                 break
             beforeGenerationSet = currentSet
+    
+    def recombination(self, masks):
+        '''
+        Recombining two solutions for a given subset of activities
+        
+        Using a linkage tree for subsets of activities
+        '''
+
+        for i in xrange(0, len(self.individuals)):
+            p1 = self.individuals[i]
+            for mask in masks:
+                while True:
+                    j = random.randint(0, len(self.individuals))
+                    if j != i:
+                        break
+                d = self.individuals[j]
+
+                p2 = self.applyMask(p1, d, mask)
+                p2.fitness = yield p2
+                
+                if p2 < p1:
+                    self.individuals[i] = p2
+
+    def clusterDependencyDistance(self, c1, c2):
+        '''
+        Calculates the true entropic distance between two clusters of genes.
+
+        Parameters:
+
+        - ``c1``: The first cluster.
+        - ``c2``: The second cluster.
+        '''
+        result = 0
+        for n in c1:
+            for m in c2:
+                result += self.computeDependencyMeasure(n, m)
+        return result
+        
+    def computeDependencyMeasure(self, n, m):
+        # x_nm > P * pi_nm
+        w = self.attractionRepulsionWeight
+        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals) / self.dimensions:
+            return self.computeDepencencyStat(n, m) * (w + (1 - w) * self.computeIntervalDependency(n, m))
+        else:
+            return self.computeDepencencyStat(n, m) * (w + (1 - w) * self.computeExternalDependency(n, m))
+
+    def getSameShiftSchedules(self, n, m):
+        count = 0
+        for individual in self.individuals:
+            if math.floor(individual[n - 1]) == math.floor(individual[m - 1]):
+                count += 1
+        return count
+    
+    def computeDepencencyStat(self, n, m):
+        pass
+
+    def computeIntervalDependency(self, n, m):
+        sameShiftSchedules = self.getSameShiftSchedules(n, m)
+
+        cnt1 = 0
+        cnt2 = 0
+        for individual in sameShiftSchedules:
+            cnt1 += 1 if individual[n] < individual[m] else 0
+            cnt2 += math.pow(individual[n] - individual[m], 2)
+
+        p = cnt1 / len(sameShiftSchedules)
+        relativeOrderingInfor = 1 - (-p * math.log(p, 2) - (1 - p) * math.log(1 - p, 2))
+        adjacencyInfor = 1 - cnt2 / len(sameShiftSchedules)
+
+        return adjacencyInfor * relativeOrderingInfor
+    
+    def computeExternalDependency(self, n, m):
+        def countSchedules(listActivity, listShift):
+            assert len(listActivity) == len(listShift), "--ERROR---------------"
+            count = 0
+            for individual in self.individuals:
+                check = True
+                for i in range(len(listActivity)):
+                    activity = listActivity[i]
+                    shift = listShift[i]
+                    if math.floor(individual[activity - 1]) != shift:
+                        check = False
+                        break
+                if check: count += 1
+            return count
+        
+        score = 0
+        min_c = min(len(self.getFeasibleShifts(n)), len(self.getFeasibleShifts(m)))
+        for v in self.getFeasibleShifts(n):
+            for w in self.getFeasibleShifts(m):
+                q_nm = countSchedules([n, m], [v, w])
+                q_n = countSchedules([n], [v])
+                q_m = countSchedules([m], [w])
+                score += q_nm * math.log(q_nm / (q_n * q_m), min_c)
+        return score
+    
+    def getFeasibleShifts(self, n):
+        return [i + 1 for i in range(self.numOfShifts)]

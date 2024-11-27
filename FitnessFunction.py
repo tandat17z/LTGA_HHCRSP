@@ -328,3 +328,18 @@ class NearestNeighborNK(FitnessFunction):
             last = known[i, last, a]
             optimalString += last
         return fitness, map(int, optimalString)
+
+class TestFitnessFunction(FitnessFunction):
+    def __init__(self, config, runNumber):
+        self.w_x = config['w_x']
+        self.w_y = config['w_y']
+        self.w_z = config['w_z']
+
+
+        pass
+
+    def evaluate(self, genes):
+        return 1
+    
+    def subProblemsSolved(self, genes):
+        return 1
