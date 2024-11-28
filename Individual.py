@@ -2,7 +2,7 @@
 Simple module containing individual object implementations.
 '''
 import sys
-
+import hashlib
 
 class Individual(object):
     '''
@@ -56,8 +56,7 @@ class Individual(object):
         return int("".join(map(str, self.genes)), 2)
 
     def __hash__(self):
-        '''
-        Returns the value of ``__int__``, used when determinging sets of unique
-        individuals.
-        '''
-        return int(self)
+   
+     genes_str = ",".join(map(str, self.genes))
+     hash_hex = hashlib.sha256(genes_str.encode('utf-8')).hexdigest()
+     return int(hash_hex, 16)
