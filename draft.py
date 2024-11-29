@@ -67,52 +67,7 @@ class LTGA(object):
             lookup[mask] = result
             return result
 
-    # def clusterDistance(self, c1, c2, lookup):
-    #     '''
-    #     Calculates the true entropic distance between two clusters of genes.
-
-    #     Parameters:
-
-    #     - ``c1``: The first cluster.
-    #     - ``c2``: The second cluster.
-    #     - ``lookup``: A dictionary mapping cluster pairs to their previously
-    #       found distances.  Should be reset if the population changes.
-    #     '''
-    #     try:
-    #         return lookup[c1, c2]
-    #     except KeyError:
-    #         try:
-    #             result = 2 - ((self.entropy(c1, lookup) +
-    #                            self.entropy(c2, lookup))
-    #                           / self.entropy(c1 + c2, lookup))
-    #         except ZeroDivisionError:
-    #             result = 2  # Zero division only happens in 0/0
-    #         lookup[c1, c2] = result
-    #         lookup[c2, c1] = result
-    #         return result
-
-    # def pairwiseDistance(self, c1, c2, lookup):
-    #     '''
-    #     Calculates the pairwise approximation of the entropic distance between
-    #     two clusters of genes.
-
-    #     Parameters:
-
-    #     - ``c1``: The first cluster.
-    #     - ``c2``: The second cluster.
-    #     - ``lookup``: A dictionary mapping cluster pairs to their previously
-    #       found distances.  Should be reset if the population changes.
-    #     '''
-    #     try:
-    #         return lookup[c1, c2]
-    #     except KeyError:
-    #         # averages the pairwise distance between each cluster
-    #         result = sum(self.clusterDistance((a,), (b,), lookup)
-    #                      for a in c1 for b in c2) / float(len(c1) * len(c2))
-    #         lookup[c1, c2] = result
-    #         lookup[c2, c1] = result
-    #         return result
-
+    
     def buildTree(self, distance):
         '''
         Given a method of calculating distance, build the linkage tree for the
@@ -203,78 +158,7 @@ class LTGA(object):
         return Individual([p2.genes[g] if g in maskSet else p1.genes[g]
                            for g in range(len(p1.genes))])
 
-    # def twoParentCrossover(self, masks):
-    #     '''
-    #     Creates individual generator using the two parent crossover variant.
-    #     Uses coroutines to send out individuals and receive their fitness
-    #     values.  Terminates when a complete evolutionary generation has
-    #     finished.
-
-    #     Parameters:
-
-    #     - ``masks``: The list of crossover masks to be used when generating
-    #       individuals, ordered based on how they should be applied.
-    #     '''
-    #     offspring = []
-    #     # Does the following twice in order to make enough children
-    #     for _ in [0, 1]:
-    #         random.shuffle(self.individuals)
-    #         # pairs off parents with their neighbor
-    #         for i in xrange(0, len(self.individuals) - 1, 2):
-    #             p1 = self.individuals[i]
-    #             p2 = self.individuals[i + 1]
-    #             for mask in masks:
-    #                 c1 = self.applyMask(p1, p2, mask)
-    #                 c2 = self.applyMask(p2, p1, mask)
-    #                 # Duplicates are caught higher up
-    #                 c1.fitness = yield c1
-    #                 c2.fitness = yield c2
-    #                 # if the best child is better than the best parent
-    #                 if max(p1, p2) < max(c1, c2):
-    #                     p1, p2 = c1, c2
-    #             # Overwrite the parents with the modified version
-    #             self.individuals[i] = p1
-    #             self.individuals[i + 1] = p2
-    #             # The offspring is the best individual created during the cross
-    #             offspring.append(max(p1, p2))
-    #     self.individuals = offspring
-
-    # def globalCrossover(self, masks):
-    #     '''
-    #     Creates individual generator using the global crossover variant.
-    #     Uses coroutines to send out individuals and receive their fitness
-    #     values.  Terminates when a complete evolutionary generation has
-    #     finished.
-
-    #     Parameters:
-
-    #     - ``masks``: The list of crossover masks to be used when generating
-    #       individuals, ordered based on how they should be applied.
-    #     '''
-    #     # Creates a dictionary to track individual's values for each mask
-    #     values = {mask: [] for mask in masks}
-    #     for mask in masks:
-    #         for individual in self.individuals:
-    #             value = self.getMaskValue(individual, mask)
-    #             values[mask].append(value)
-    #     # each individual creates a single offspring, which replaces itself
-    #     for individual in self.individuals:
-    #         for mask in masks:
-    #             startingValue = self.getMaskValue(individual, mask)
-    #             # Find the list of values in the population that differ from
-    #             # the current individual's values for this mask
-    #             options = [value for value in values[mask]
-    #                        if value != startingValue]
-    #             if len(options) > 0:
-    #                 value = random.choice(options)
-    #                 self.setMaskValues(individual, mask, value)
-    #                 newFitness = yield individual
-    #                 # if the individual improved, update fitness
-    #                 if individual.fitness < newFitness:
-    #                     individual.fitness = newFitness
-    #                 # The individual did not improve, revert changes
-    #                 else:
-    #                     self.setMaskValues(individual, mask, startingValue)
+    
 
     def generate(self, initialPopulation, config):
         '''
@@ -384,12 +268,40 @@ class LTGA(object):
                 count += 1
         return count
     
+    # Xác suất pi_nm 2 hoạt độn n và m được xếp chung 1 ca làm việc
+    def calculateProbability(self, n, m):
+        Cn = set(self.getFeasibleShifts(n))  
+        Cm = set(self.getFeasibleShifts(m))  
+        
+        # Tính giao của hai tập
+        intersection = Cn.intersection(Cm)
+        
+        probability = len(intersection) / (len(Cn) * len(Cm))
+        
+        return probability
+
+    # Xác suất P(X_nm <= x_nm)
+    def calculateProbability2(self, n, m):
+        pi_nm = self.calculateProbability(n, m)
+        x_nm = self.getSameShiftSchedules(n, m)
+        count = 0
+        for X_nm in range (x_nm + 1):
+            count += math.comb(len(self.individuals), X_nm) * math.pow(pi_nm, X_nm) * math.pow(1 - pi_nm, len(self.individuals) - X_nm)
+        return count
+    
+    # Xác suất P(X_nm <= P*pi_nm)
+    def calculateProbability3(self, n, m):
+        pi_nm = self.calculateProbability(n, m)
+        count = 0
+        for X_nm in range (len(self.individuals)*pi_nm + 1):
+            count += math.comb(len(self.individuals), X_nm) * math.pow(pi_nm, X_nm) * math.pow(1 - pi_nm, len(self.individuals) - X_nm)
+        return count
+
     def computeDependencyStat(self, n, m):
-        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals) / self.dimensions:
-            return 
+        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals)*self.calculateProbability(n, m):
+            return 1 - (1 - self.calculateProbability2(n, m)) / (1 - self.calculateProbability3(n, m))
         else:
-            
-            return 0
+            return 1 - self.calculateProbability2(n, m) / self.calculateProbability3(n, m)
         pass
 
     def computeIntervalDependency(self, n, m):
