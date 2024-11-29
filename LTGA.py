@@ -384,13 +384,41 @@ class LTGA(object):
                 count += 1
         return count
     
+    # Xác suất pi_nm 2 hoạt độn n và m được xếp chung 1 ca làm việc
+    def calculateProbability(self, n, m):
+        Cn = set(self.getFeasibleShifts(n))  
+        Cm = set(self.getFeasibleShifts(m))  
+        
+        # Tính giao của hai tập
+        intersection = Cn.intersection(Cm)
+        
+        probability = len(intersection) / (len(Cn) * len(Cm))
+        
+        return probability
+
+    # Xác suất P(X_nm <= x_nm)
+    def calculateProbability2(self, n, m):
+        pi_nm = self.calculateProbability(n, m)
+        x_nm = self.getSameShiftSchedules(n, m)
+        count = 0
+        for X_nm in range (x_nm + 1):
+            count += math.comb(len(self.individuals), X_nm) * math.pow(pi_nm, X_nm) * math.pow(1 - pi_nm, len(self.individuals) - X_nm)
+        return count
+    
+    # Xác suất P(X_nm <= P*pi_nm)
+    def calculateProbability3(self, n, m):
+        pi_nm = self.calculateProbability(n, m)
+        count = 0
+        for X_nm in range (len(self.individuals)*pi_nm + 1):
+            count += math.comb(len(self.individuals), X_nm) * math.pow(pi_nm, X_nm) * math.pow(1 - pi_nm, len(self.individuals) - X_nm)
+        return count
+
     def computeDependencyStat(self, n, m):
-        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals) / self.dimensions:
-            return 
+        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals)*self.calculateProbability(n, m):
+            return 1 - (1 - self.calculateProbability2(n, m)) / (1 - self.calculateProbability3(n, m))
         else:
-            
-            return 0
-        pass
+            return 1 - self.calculateProbability2(n, m) / self.calculateProbability3(n, m)
+
 
     def computeIntervalDependency(self, n, m):
         sameShiftSchedules = self.getSameShiftSchedules(n, m)
