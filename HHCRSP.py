@@ -2,6 +2,9 @@ import random
 
 class HHCRSP(object):
     def __init__(self, config):
+        self.n = config['dimensions']
+        self.v = config['numberOfShifts']
+        
         threshold = config['THRESHOLD']
         max_d = config['MAX_D']
         max_p = config['MAX_P']
@@ -9,9 +12,6 @@ class HHCRSP(object):
         max_start = config['MAX_START']
         max_window = config['MAX_WINDOW_SIZE']
         maxDuration = config['MAX_DURATION']
-
-        self.n = config['dimensions']
-        self.v = config['numberOfShifts']
 
         self.matrixQ = [[int(random.random() > threshold) for j in range(self.v)] for i in range(self.n)]
         self.matrixD = [[random.randint(0, max_d) for j in range(self.n)] for i in range(self.n)]
@@ -26,6 +26,8 @@ class HHCRSP(object):
         self.w_z = config['w_z']
 
         self.lookUpFeasibleShifts = {}
+
+        self.w_dependency = config['w_dependency']
 
     def __str__(self):
         s = "n = %d, v = %d  \n" % (self.n, self.v)

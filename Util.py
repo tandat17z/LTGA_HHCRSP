@@ -110,29 +110,21 @@ def saveList(filename, data, fileMethod=open):
         f.write(']' + os.linesep)
 
 
-def randomBitString(length):
-    '''
-    Generate and return a random list of 0s and 1s.
+# def randomBitString(length):
+#     '''
+#     Generate and return a random list of 0s and 1s.
 
-    Parameters:
+#     Parameters:
 
-    - ``length``: The length of the list to be generated.
-    '''
-    generated = bin(random.getrandbits(length))[2:]  # String of bits
-    leadingZeros = '0' * (length - len(generated)) + generated
-    return map(int, leadingZeros)
+#     - ``length``: The length of the list to be generated.
+#     '''
+#     generated = bin(random.getrandbits(length))[2:]  # String of bits
+#     leadingZeros = '0' * (length - len(generated)) + generated
+#     return map(int, leadingZeros)
 
 def randomGene(n, v):
     '''  
-    Tạo một vector ngẫu nhiên với n chiều.
-    Mỗi phần tử trong vector là một số thực từ [1, v).
-
-    Parameters:
-    - n: Số chiều của vector.
-    - v: Giá trị tối đa trong vector (không bao gồm).
-
-    Returns:
-    - Một danh sách gồm n số thực.
+    
     '''
     return [random.uniform(1, v-1) for _ in range(n)]
 

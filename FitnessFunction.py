@@ -329,17 +329,13 @@ class NearestNeighborNK(FitnessFunction):
             optimalString += last
         return fitness, map(int, optimalString)
 
-class TestFitnessFunction(FitnessFunction):
+class FitnessFunction_HHCRSP(FitnessFunction):
     def __init__(self, config, runNumber):
-        self.w_x = config['w_x']
-        self.w_y = config['w_y']
-        self.w_z = config['w_z']
-
 
         pass
 
     def evaluate(self, genes):
-        return 1
+        return sum(genes)
     
     def subProblemsSolved(self, genes):
-        return 1
+        return 0

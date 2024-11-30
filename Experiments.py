@@ -39,7 +39,7 @@ def createInitialPopulation(runNumber, evaluator, config):
       - ``k``: The k value used by the problem.
       - ``popSize``: The population size to be created.
     '''
-    config['numOfShifts'] = 5
+    config_hhcrsp = config['hhcrsp']
 
     rngState = random.getstate()  # Stores the state of the RNG
     filename = config["initialPopFolder"] + os.sep
@@ -54,13 +54,17 @@ def createInitialPopulation(runNumber, evaluator, config):
     newInfo = len(data) < config["popSize"]
     while len(data) < config["popSize"]:
         row = {}
-        genes = Util.randomGene(config['dimensions'],config['numOfShifts'])
+        genes = Util.randomGene(config_hhcrsp.n, config_hhcrsp.v)
 
         # evaluations = HillClimber.climb(genes, evaluator,
         #                          HillClimber.steepestAscentHillClimber)
         # iterations = evaluations / config['dimensions']
         # fitness = evaluator.evaluate(genes)
         # subproblems = evaluator.subProblemsSolved(genes)
+        evaluations = 0
+        iterations = 0
+        fitness = evaluator.evaluate(genes)
+        subproblems = evaluator.subProblemsSolved(genes)
         try:
             # Keeps a running sum of current population
             total = data[-1]
@@ -117,14 +121,14 @@ def oneRun(runNumber, optimizerClass, evaluator, config):
     result["evaluations"] = 0
 
     bestFitness = max(population).fitness
-    lookup = {int(individual): individual.fitness
+    lookup = {hash(individual): individual.fitness
               for individual in population}
     optimizer = optimizerClass().generate(population, config)
     try:
         individual = optimizer.next()  # Get the first individual
         while (result['evaluations'] < config["maximumEvaluations"] and
                bestFitness < config["maximumFitness"]):
-            key = int(individual)
+            key = hash(individual)
             try:
                 # If this individual has been rated before
                 fitness = lookup[key]

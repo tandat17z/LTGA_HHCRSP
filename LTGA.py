@@ -40,32 +40,32 @@ class LTGA(object):
         for valueIndex, geneIndex in enumerate(mask):
             individual.genes[geneIndex] = value[valueIndex]
 
-    def entropy(self, mask, lookup):
-        '''
-        Calculates the current populations entropy for a given mask.
+    # def entropy(self, mask, lookup):
+    #     '''
+    #     Calculates the current populations entropy for a given mask.
 
-        Parameters:
+    #     Parameters:
 
-        - ``mask``: The list of indices to examine
-        - ``lookup``: A dictionary containing entropy values already found for
-          this population.  Should be reset if the population changes.
-        '''
-        try:
-            return lookup[mask]
-        except KeyError:
-            occurances = {}
-            for individual in self.individuals:
-                # extract the gene values for the cluster
-                value = self.getMaskValue(individual, mask)
-                try:
-                    occurances[value] += 1
-                except KeyError:
-                    occurances[value] = 1
-            total = float(len(self.individuals))
-            result = -sum(x / total * math.log(x / total, 2)
-                          for x in occurances.itervalues())
-            lookup[mask] = result
-            return result
+    #     - ``mask``: The list of indices to examine
+    #     - ``lookup``: A dictionary containing entropy values already found for
+    #       this population.  Should be reset if the population changes.
+    #     '''
+    #     try:
+    #         return lookup[mask]
+    #     except KeyError:
+    #         occurances = {}
+    #         for individual in self.individuals:
+    #             # extract the gene values for the cluster
+    #             value = self.getMaskValue(individual, mask)
+    #             try:
+    #                 occurances[value] += 1
+    #             except KeyError:
+    #                 occurances[value] = 1
+    #         total = float(len(self.individuals))
+    #         result = -sum(x / total * math.log(x / total, 2)
+    #                       for x in occurances.itervalues())
+    #         lookup[mask] = result
+    #         return result
 
     # def clusterDistance(self, c1, c2, lookup):
     #     '''
@@ -138,15 +138,23 @@ class LTGA(object):
             Internal function used to find the list of all clusters pairings
             with the current smallest distances.
             '''
-            minVal = 3  # Max possible distance should be 2
+            # minVal = 3  # Max possible distance should be 2
+            # results = []
+            # for c1, c2 in combinations(clusters, 2):
+            #     result = distance(c1, c2, lookup)
+            #     if result < minVal:
+            #         minVal = result
+            #         results = [(c1, c2)]
+            #     if result == minVal:
+            #         results.append((c1, c2))
             results = []
+            maxVal = None
             for c1, c2 in combinations(clusters, 2):
                 result = distance(c1, c2, lookup)
-                if result < minVal:
-                    minVal = result
+                if maxVal == None or result > maxVal:
+                    maxVal = result
                     results = [(c1, c2)]
-                if result == minVal:
-                    results.append((c1, c2))
+
             return results
 
         while len(clusters) > 1:
@@ -304,10 +312,7 @@ class LTGA(object):
           - ``crossover``: The method used to generate new individuals, for
             instance ``twoParentCrossover`` and ``globalCrossover``.
         '''
-        self.dimensions = config['dimensions']
-        self.numOfShifts = config['numOfShifts']
-        self.attractionRepulsionWeight = config['attractionRepulsionWeight'] # the relative
-        self.matrixDistance = config.matrixDistanceQ
+        self.hhcrsp = config['hhcrsp']
 
         self.individuals = initialPopulation
         distance = Util.classMethods(self)[config["distance"]]
@@ -338,15 +343,13 @@ class LTGA(object):
         
         Using a linkage tree for subsets of activities
         '''
-
+        random.shuffle(self.individuals)
+        beforeIndividuals = self.individuals
         for i in xrange(0, len(self.individuals)):
             p1 = self.individuals[i]
             for mask in masks:
-                while True:
-                    j = random.randint(0, len(self.individuals))
-                    if j != i:
-                        break
-                d = self.individuals[j]
+                candidates = [_ for _ in xrange(0, len(self.individuals)) if _ != i]
+                d = beforeIndividuals[random.choice(candidates)]
 
                 p2 = self.applyMask(p1, d, mask)
                 p2.fitness = yield p2
@@ -354,7 +357,8 @@ class LTGA(object):
                 if p2 < p1:
                     self.individuals[i] = p2
 
-    def clusterDependencyDistance(self, c1, c2):
+    # -------------Tính khoảng cách giữa các cluster để build tree------------------------------------------
+    def clusterDependencyDistance(self, c1, c2, lookup):
         '''
         Calculates the true entropic distance between two clusters of genes.
 
@@ -369,55 +373,45 @@ class LTGA(object):
                 result += self.computeDependencyMeasure(n, m)
         return result
         
+    # --------------Tính dependency measure giữa 2 hoạt động n và m--------------------
     def computeDependencyMeasure(self, n, m):
         # x_nm > P * pi_nm
-        w = self.attractionRepulsionWeight
-        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals) / self.dimensions:
-            return self.computeDepencencyStat(n, m) * (w + (1 - w) * self.computeIntervalDependency(n, m))
+        w = self.hhcrsp.w_dependency
+        pi = self.calculatePi(n, m)
+
+        if self.getSameShiftSchedules(n, m) > len(self.individuals) * pi :
+            return self.computeDependencyStat(n, m) * (w + (1 - w) * self.computeIntervalDependency(n, m))
         else:
-            return self.computeDepencencyStat(n, m) * (w + (1 - w) * self.computeExternalDependency(n, m))
-
-    def getSameShiftSchedules(self, n, m):
-        count = 0
-        for individual in self.individuals:
-            if math.floor(individual[n - 1]) == math.floor(individual[m - 1]):
-                count += 1
-        return count
-    
-    # Xác suất pi_nm 2 hoạt độn n và m được xếp chung 1 ca làm việc
-    def calculateProbability(self, n, m):
-        Cn = set(self.getFeasibleShifts(n))  
-        Cm = set(self.getFeasibleShifts(m))  
-        
-        # Tính giao của hai tập
-        intersection = Cn.intersection(Cm)
-        
-        probability = len(intersection) / (len(Cn) * len(Cm))
-        
-        return probability
-
-    # Xác suất P(X_nm <= x_nm)
-    def calculateProbability2(self, n, m):
-        pi_nm = self.calculateProbability(n, m)
-        x_nm = self.getSameShiftSchedules(n, m)
-        count = 0
-        for X_nm in range (x_nm + 1):
-            count += math.comb(len(self.individuals), X_nm) * math.pow(pi_nm, X_nm) * math.pow(1 - pi_nm, len(self.individuals) - X_nm)
-        return count
-    
-    # Xác suất P(X_nm <= P*pi_nm)
-    def calculateProbability3(self, n, m):
-        pi_nm = self.calculateProbability(n, m)
-        count = 0
-        for X_nm in range (len(self.individuals)*pi_nm + 1):
-            count += math.comb(len(self.individuals), X_nm) * math.pow(pi_nm, X_nm) * math.pow(1 - pi_nm, len(self.individuals) - X_nm)
-        return count
+            return self.computeDependencyStat(n, m) * (w + (1 - w) * self.computeExternalDependency(n, m))
 
     def computeDependencyStat(self, n, m):
-        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals)*self.calculateProbability(n, m):
-            return 1 - (1 - self.calculateProbability2(n, m)) / (1 - self.calculateProbability3(n, m))
+        def calculateP1(self, n, m):
+            '''
+            probality P(X_nm <= x_nm)
+            '''
+            pi_nm = self.calculatePi(n, m)
+            x_nm = self.getSameShiftSchedules(n, m)
+            count = 0 # = sum(C_n_k * pi ^ k * (1 - p) * ( n - k))
+            for k in range (x_nm + 1):
+                count += math.comb(len(self.individuals), k) * math.pow(pi_nm, k) * math.pow(1 - pi_nm, len(self.individuals) - k)
+            return count
+        
+        # Xác suất P(X_nm <= P*pi_nm)
+        def calculateP2(self, n, m):
+            '''
+            probality P(X_nm <= P*pi_nm)
+            '''
+            pi_nm = self.calculatePi(n, m)
+            count = 0 # = sum(C_n_k * pi ^ k * (1 - p) * ( n - k))
+            for k in range (len(self.individuals)*pi_nm + 1):
+                count += math.comb(len(self.individuals), k) * math.pow(pi_nm, k) * math.pow(1 - pi_nm, len(self.individuals) - k)
+            return count
+        
+        pi = self.calculatePi(n, m)
+        if self.getSameShiftSchedules(n, m) > len(self.individuals) * pi:
+            return 1 - (1 - calculateP1(self, n, m)) / (1 - calculateP2(self, n, m))
         else:
-            return 1 - self.calculateProbability2(n, m) / self.calculateProbability3(n, m)
+            return 1 - calculateP1(self, n, m) / calculateP2(self, n, m)
 
 
     def computeIntervalDependency(self, n, m):
@@ -451,7 +445,10 @@ class LTGA(object):
             return count
         
         score = 0
-        min_c = min(len(self.getFeasibleShifts(n)), len(self.getFeasibleShifts(m)))
+        c1 = self.hhcrsp.getFeasibleShifts(n)
+        c2 = self.hhcrsp.getFeasibleShifts(m)
+        min_c = min(len(c1), len(c2))
+
         for v in self.getFeasibleShifts(n):
             for w in self.getFeasibleShifts(m):
                 q_nm = countSchedules([n, m], [v, w])
@@ -460,5 +457,21 @@ class LTGA(object):
                 score += q_nm * math.log(q_nm / (q_n * q_m), min_c)
         return score
     
-    def getFeasibleShifts(self, n):
-        return [i + 1 for i in range(self.numOfShifts)]
+    # ----------------- Các hàm hỗ trợ tính dependency measure ------------------
+    def getSameShiftSchedules(self, n, m):
+        '''
+        So luong individual ma hoat dong n, m co ca giong nhau
+        '''
+        count = 0
+        for individual in self.individuals:
+            if math.floor(individual[n - 1]) == math.floor(individual[m - 1]):
+                count += 1
+        return count
+    
+    def calculatePi(self, n, m):
+        '''
+        Xác suất pi_nm 2 hoạt độn n và m được xếp chung 1 ca làm việc
+        '''
+        c1 = self.hhcrsp.getFeasibleShifts(n)
+        c2 = self.hhcrsp.getFeasibleShifts(m) 
+        return len(list(set(c1) & set(c2))) / (len(c1) * len(c2))
