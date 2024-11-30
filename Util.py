@@ -122,6 +122,19 @@ def randomBitString(length):
     leadingZeros = '0' * (length - len(generated)) + generated
     return map(int, leadingZeros)
 
+def randomGene(n, v):
+    '''  
+    Tạo một vector ngẫu nhiên với n chiều.
+    Mỗi phần tử trong vector là một số thực từ [1, v).
+
+    Parameters:
+    - n: Số chiều của vector.
+    - v: Giá trị tối đa trong vector (không bao gồm).
+
+    Returns:
+    - Một danh sách gồm n số thực.
+    '''
+    return [random.uniform(1, v-1) for _ in range(n)]
 
 def median(data, default=0):
     '''

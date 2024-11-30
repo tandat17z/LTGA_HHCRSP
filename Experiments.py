@@ -39,6 +39,8 @@ def createInitialPopulation(runNumber, evaluator, config):
       - ``k``: The k value used by the problem.
       - ``popSize``: The population size to be created.
     '''
+    config['numOfShifts'] = 5
+
     rngState = random.getstate()  # Stores the state of the RNG
     filename = config["initialPopFolder"] + os.sep
     filename += "%(problem)s_%(dimensions)i_%(k)i_" % config
@@ -52,12 +54,13 @@ def createInitialPopulation(runNumber, evaluator, config):
     newInfo = len(data) < config["popSize"]
     while len(data) < config["popSize"]:
         row = {}
-        genes = Util.randomBitString(config['dimensions'])
-        evaluations = HillClimber.climb(genes, evaluator,
-                                 HillClimber.steepestAscentHillClimber)
-        iterations = evaluations / config['dimensions']
-        fitness = evaluator.evaluate(genes)
-        subproblems = evaluator.subProblemsSolved(genes)
+        genes = Util.randomGene(config['dimensions'],config['numOfShifts'])
+
+        # evaluations = HillClimber.climb(genes, evaluator,
+        #                          HillClimber.steepestAscentHillClimber)
+        # iterations = evaluations / config['dimensions']
+        # fitness = evaluator.evaluate(genes)
+        # subproblems = evaluator.subProblemsSolved(genes)
         try:
             # Keeps a running sum of current population
             total = data[-1]
