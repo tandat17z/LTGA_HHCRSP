@@ -43,7 +43,7 @@ def createInitialPopulation(runNumber, evaluator, config):
 
     rngState = random.getstate()  # Stores the state of the RNG
     filename = config["initialPopFolder"] + os.sep
-    filename += "%(problem)s_%(dimensions)i_%(k)i_" % config
+    filename += "%(problem)s_%(numActivities)i_%(numShifts)i_" % config
     filename += "%i.dat.gz" % runNumber
     try:
         data = Util.loadConfiguration(filename, gzip.open)
@@ -54,7 +54,7 @@ def createInitialPopulation(runNumber, evaluator, config):
     newInfo = len(data) < config["popSize"]
     while len(data) < config["popSize"]:
         row = {}
-        genes = Util.randomGene(config_hhcrsp.n, config_hhcrsp.v)
+        genes = Util.randomGene(config_hhcrsp.numActivities, config_hhcrsp.numShifts)
 
         # evaluations = HillClimber.climb(genes, evaluator,
         #                          HillClimber.steepestAscentHillClimber)
@@ -119,7 +119,9 @@ def oneRun(runNumber, optimizerClass, evaluator, config):
     '''
     population, result = createInitialPopulation(runNumber, evaluator, config)
     result["evaluations"] = 0
-
+    print('population:')
+    for individual in population:
+        print('\t' + str(individual) )
     bestFitness = max(population).fitness
     lookup = {hash(individual): individual.fitness
               for individual in population}
@@ -172,6 +174,7 @@ def fullRun(config):
     results = []
     try:
         for runNumber in range(config["runs"]):
+            print 'runNumber: %d' % runNumber
             options = Util.moduleClasses(FitnessFunction)
             evaluator = options[config["problem"]](config, runNumber)
             results.append(oneRun(runNumber, LTGA, evaluator, config))

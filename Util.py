@@ -176,3 +176,19 @@ def binaryCounter(bits):
     - ``bits`` The number of bits in the binary counter.
     '''
     return itertools.product((0, 1), repeat=bits)
+
+def comb(n, k):
+    '''
+    C(n, k)
+    '''
+    if k > n:
+        return 0
+    if k == 0 or k == n:
+        return 1
+    num = 1
+    den = 1
+    for i in range(1, k + 1):
+        num *= n
+        den *= i
+        n -= 1
+    return num // den

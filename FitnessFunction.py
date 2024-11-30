@@ -338,4 +338,4 @@ class FitnessFunction_HHCRSP(FitnessFunction):
         return sum(genes)
     
     def subProblemsSolved(self, genes):
-        return 0
+        return [0]

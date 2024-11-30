@@ -369,6 +369,10 @@ class LTGA(object):
         result = 0
         for n in c1:
             for m in c2:
+                try:
+                    pi = self.calculatePi(n, m) 
+                except:# len(c) == 0
+                    continue
                 result += self.computeDependencyMeasure(n, m)
         return result
         
@@ -380,8 +384,7 @@ class LTGA(object):
         # x_nm > P * pi_nm
         w = self.hhcrsp.w_dependency
         pi = self.calculatePi(n, m)
-
-        if self.getSameShiftSchedules(n, m) > len(self.individuals) * pi :
+        if len(self.getSameShiftSchedules(n, m)) > len(self.individuals) * pi :
             return self.computeDependencyStat(n, m) * (w + (1 - w) * self.computeIntervalDependency(n, m))
         else:
             return self.computeDependencyStat(n, m) * (w + (1 - w) * self.computeExternalDependency(n, m))
@@ -392,10 +395,10 @@ class LTGA(object):
             probality P(X_nm <= x_nm)
             '''
             pi_nm = self.calculatePi(n, m)
-            x_nm = self.getSameShiftSchedules(n, m)
+            x_nm = len(self.getSameShiftSchedules(n, m))
             count = 0 # = sum(C_n_k * pi ^ k * (1 - p) * ( n - k))
             for k in range (x_nm + 1):
-                count += math.comb(len(self.individuals), k) * math.pow(pi_nm, k) * math.pow(1 - pi_nm, len(self.individuals) - k)
+                count += Util.comb(len(self.individuals), k) * math.pow(pi_nm, k) * math.pow(1 - pi_nm, len(self.individuals) - k)
             return count
         
         def calculateP2(self, n, m):
@@ -404,16 +407,18 @@ class LTGA(object):
             '''
             pi_nm = self.calculatePi(n, m)
             count = 0 # = sum(C_n_k * pi ^ k * (1 - p) * ( n - k))
-            for k in range (len(self.individuals)*pi_nm + 1):
-                count += math.comb(len(self.individuals), k) * math.pow(pi_nm, k) * math.pow(1 - pi_nm, len(self.individuals) - k)
+            for k in range (int(len(self.individuals)*pi_nm) + 1):
+                count += Util.comb(len(self.individuals), k) * math.pow(pi_nm, k) * math.pow(1 - pi_nm, len(self.individuals) - k)
             return count
         
         pi = self.calculatePi(n, m)
-        if self.getSameShiftSchedules(n, m) > len(self.individuals) * pi:
-            return 1 - (1 - calculateP1(self, n, m)) / (1 - calculateP2(self, n, m))
-        else:
-            return 1 - calculateP1(self, n, m) / calculateP2(self, n, m)
-
+        try:
+            if len(self.getSameShiftSchedules(n, m)) > len(self.individuals) * pi:
+                return 1 - (1 - calculateP1(self, n, m)) / (1 - calculateP2(self, n, m))
+            else:
+                return 1 - calculateP1(self, n, m) / calculateP2(self, n, m)
+        except:
+            return 1
 
     def computeIntervalDependency(self, n, m):
         sameShiftSchedules = self.getSameShiftSchedules(n, m)
@@ -421,11 +426,15 @@ class LTGA(object):
         cnt1 = 0
         cnt2 = 0
         for individual in sameShiftSchedules:
-            cnt1 += 1 if individual[n] < individual[m] else 0
-            cnt2 += math.pow(individual[n] - individual[m], 2)
+            cnt1 += 1 if individual.genes[n] < individual.genes[m] else 0
+            cnt2 += math.pow(individual.genes[n] - individual.genes[m], 2)
 
-        p = cnt1 / len(sameShiftSchedules)
-        relativeOrderingInfor = 1 - (-p * math.log(p, 2) - (1 - p) * math.log(1 - p, 2))
+        p = float(cnt1) / len(sameShiftSchedules)
+        
+        try:
+            relativeOrderingInfor = 1 - (-p * math.log(p, 2) - (1 - p) * math.log(1 - p, 2))
+        except:
+            relativeOrderingInfor = 1
         adjacencyInfor = 1 - cnt2 / len(sameShiftSchedules)
 
         return adjacencyInfor * relativeOrderingInfor
@@ -439,7 +448,7 @@ class LTGA(object):
                 for i in range(len(listActivity)):
                     activity = listActivity[i]
                     shift = listShift[i]
-                    if math.floor(individual[activity - 1]) != shift:
+                    if math.floor(individual.genes[activity - 1]) != shift:
                         check = False
                         break
                 if check: count += 1
@@ -450,12 +459,15 @@ class LTGA(object):
         c2 = self.hhcrsp.getFeasibleShifts(m)
         min_c = min(len(c1), len(c2))
 
-        for v in self.getFeasibleShifts(n):
-            for w in self.getFeasibleShifts(m):
+        for v in c1:
+            for w in c2:
                 q_nm = countSchedules([n, m], [v, w])
                 q_n = countSchedules([n], [v])
                 q_m = countSchedules([m], [w])
-                score += q_nm * math.log(q_nm / (q_n * q_m), min_c)
+                try:
+                    score += q_nm * math.log(q_nm / (q_n * q_m), min_c)
+                except:
+                    pass
         return score
     
     # ----------------- Cac ham ho tro tinh dependency measure ------------------
@@ -463,11 +475,11 @@ class LTGA(object):
         '''
         So luong individual ma hoat dong n, m co ca giong nhau
         '''
-        count = 0
+        schedules = []
         for individual in self.individuals:
-            if math.floor(individual[n - 1]) == math.floor(individual[m - 1]):
-                count += 1
-        return count
+            if math.floor(individual.genes[n - 1]) == math.floor(individual.genes[m - 1]):
+                schedules.append(individual)
+        return schedules
     
     def calculatePi(self, n, m):
         '''
@@ -475,4 +487,4 @@ class LTGA(object):
         '''
         c1 = self.hhcrsp.getFeasibleShifts(n)
         c2 = self.hhcrsp.getFeasibleShifts(m) 
-        return len(list(set(c1) & set(c2))) / (len(c1) * len(c2))
+        return float(len(list(set(c1) & set(c2)))) / (len(c1) * len(c2))

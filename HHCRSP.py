@@ -3,8 +3,8 @@ import json
 
 class HHCRSP(object):
     def __init__(self, config):
-        self.numActivities = config['dimensions']
-        self.numShifts = config['numberOfShifts']
+        self.numActivities = config['numActivities']
+        self.numShifts = config['numShifts']
         
         threshold = config['THRESHOLD']
         max_d = config['MAX_D']
@@ -40,7 +40,7 @@ class HHCRSP(object):
             activity_id = (i + 1)
             str_activity = "activity %d: " % (activity_id)
 
-            for j in self.getFeasibleShifts(activity_id):
+            for j in self.getFeasibleShifts(activity_id - 1):
                 str_activity += str(j) + " "
             str_activity += '\n'
 
@@ -60,7 +60,7 @@ class HHCRSP(object):
     def getFeasibleShifts(self, n):
         shifts = []
         for v in range(self.numShifts):
-            if self.matrixQ[n - 1][v] == 1:
+            if self.matrixQ[n][v] == 1:
                 shifts.append(v + 1)
         return shifts
     

@@ -36,7 +36,7 @@ parser.add_argument('configs', metavar='Configuration Files',
                     help='One or more json formatted files containing' +
                         ' configuration information')
 
-parser.add_argument('-p', dest='popSize', type=int,
+parser.add_argument('-p', dest='popSize', type=int, default=10,
                     help='Use specified population size')
 
 parser.add_argument('-b', dest='bisection', action='store_true',
@@ -59,17 +59,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = Util.loadConfigurations(args.configs)
     config['hhcrsp'] = HHCRSP(config)
+
     config['hhcrsp'].save(0)
     print str(config['hhcrsp'])
-    # print(str(config['hhcrsp']))
-    # config['verbose'] = args.verbose
+    
+    config['verbose'] = args.verbose
 
-    # if 'seed' not in config:
-    #     config['seed'] = random.randint(0, sys.maxint)
-    # random.seed(config['seed'])
+    if 'seed' not in config:
+        config['seed'] = random.randint(0, sys.maxint)
+    random.seed(config['seed'])
 
-    # if args.popSize != None:
-    #     config['popSize'] = args.popSize
+    if args.popSize != None:
+        config['popSize'] = args.popSize
 
     # if args.dimensions != None:
     #     config['dimensions'] = args.dimensions
@@ -79,13 +80,13 @@ if __name__ == '__main__':
     #         print 'Using bisection to determine minimum population size'
     #     Experiments.bisection(config)
 
-    # try:
-    #     rawResults = Experiments.fullRun(config)
-    #     combinedResults = Experiments.combineResults(rawResults)
+    try:
+        rawResults = Experiments.fullRun(config)
+        # combinedResults = Experiments.combineResults(rawResults)
 
-    #     print combinedResults
-    # except KeyError as e:
-    #     print 'You must include a configuration value for', e.args[0]
+        # print combinedResults
+    except KeyError as e:
+        print 'You must include a configuration value for', e.args[0]
 
     # if args.output_results != None:
     #     Util.saveList(args.output_results, [combinedResults] + rawResults)

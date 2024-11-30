@@ -45,7 +45,7 @@ class Individual(object):
         Converts the individual into a string representation useful for
         displaying an individual.
         '''
-        return "(%s) = %s" % (",".join(map(str, self.genes)),
+        return "(%s) = %s" % (", ".join(map(lambda x: "%.2f" % x, self.genes)),
                               str(self.fitness))
 
     def __int__(self):
