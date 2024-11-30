@@ -39,8 +39,6 @@ def createInitialPopulation(runNumber, evaluator, config):
       - ``k``: The k value used by the problem.
       - ``popSize``: The population size to be created.
     '''
-    config_hhcrsp = config['hhcrsp']
-
     rngState = random.getstate()  # Stores the state of the RNG
     filename = config["initialPopFolder"] + os.sep
     filename += "%(problem)s_%(numActivities)i_%(numShifts)i_" % config
@@ -54,8 +52,7 @@ def createInitialPopulation(runNumber, evaluator, config):
     newInfo = len(data) < config["popSize"]
     while len(data) < config["popSize"]:
         row = {}
-        genes = Util.randomGene(config_hhcrsp.numActivities, config_hhcrsp.numShifts)
-
+        genes = Util.randomGene(config)
         # evaluations = HillClimber.climb(genes, evaluator,
         #                          HillClimber.steepestAscentHillClimber)
         # iterations = evaluations / config['dimensions']
@@ -80,11 +77,14 @@ def createInitialPopulation(runNumber, evaluator, config):
                'minSubProblem': minSubProblem, 'fitness': fitness,
                'genes': genes, 'subproblems': subproblems}
         data.append(row)
+
     if newInfo:
         Util.saveList(filename, data, gzip.open)
+
     # Trim extra information
     data = data[:config["popSize"]]
     population = [Individual(row["genes"], row["fitness"]) for row in data]
+
     # Get the last row's information about the population
     total = data[-1]
     random.setstate(rngState)  # Ensures RNG isn't modified by this function
@@ -119,10 +119,15 @@ def oneRun(runNumber, optimizerClass, evaluator, config):
     '''
     population, result = createInitialPopulation(runNumber, evaluator, config)
     result["evaluations"] = 0
-    print('population:')
-    for individual in population:
-        print('\t' + str(individual) )
+
+    if config['verbose']:
+      print('population:')
+      for individual in population:
+          print('\t' + str(individual) )
+
     bestFitness = max(population).fitness
+    bestIndividual = max(population)
+
     lookup = {hash(individual): individual.fitness
               for individual in population}
     optimizer = optimizerClass().generate(population, config)
@@ -140,14 +145,20 @@ def oneRun(runNumber, optimizerClass, evaluator, config):
                 if config['unique']:
                     lookup[key] = fitness
                 result['evaluations'] += 1
+
+            if config['verbose']:
+              print('recombination: ', individual.genes, fitness)
+
             if bestFitness < fitness:
                 bestFitness = fitness
+                bestIndividual = individual
             # Send the fitness into the optimizer and get the next individual
             individual = optimizer.send(fitness)
     except StopIteration:  # If the optimizer ever stops, just end the run
         pass
 
     result['success'] = int(bestFitness >= config["maximumFitness"])
+    result['bestFitness'] = str(bestIndividual)
     if config['verbose']:
         print runNumber, result
     return result

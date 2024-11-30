@@ -58,6 +58,7 @@ parser.add_argument('-d', dest='dimensions', type=int,
 if __name__ == '__main__':
     args = parser.parse_args()
     config = Util.loadConfigurations(args.configs)
+    config['loadData'] = 'hhcrsp/problem.json'
     config['hhcrsp'] = HHCRSP(config)
 
     config['hhcrsp'].save(0)

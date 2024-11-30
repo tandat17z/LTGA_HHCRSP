@@ -3,6 +3,10 @@ import json
 
 class HHCRSP(object):
     def __init__(self, config):
+        if config['loadData']:
+            self.load(config['loadData'])
+            return
+        
         self.numActivities = config['numActivities']
         self.numShifts = config['numShifts']
         
@@ -60,10 +64,27 @@ class HHCRSP(object):
     def getFeasibleShifts(self, n):
         shifts = []
         for v in range(self.numShifts):
-            if self.matrixQ[n][v] == 1:
+            # if self.matrixQ[n][v] == 1:
                 shifts.append(v + 1)
         return shifts
     
+    def load(self, file_path):
+        with open(file_path, "r") as file:
+            data = json.load(file)
+        self.numActivities = data['N']
+        self.numShifts = data['V']
+        self.matrixQ = data['matrixQ']
+        self.matrixD = data['matrixD']
+        self.tStart = data['tStart']
+        self.tEnd = data['eEnd']
+        self.p = data['p']
+        self.u = data['u']
+
+        self.w_x = data['w_x']
+        self.w_y = data['w_y']
+        self.w_z = data['w_z']
+        self.w_dependency = data['w_dependency']
+
     def save(self, num):
         data = {
             'N': self.numActivities,

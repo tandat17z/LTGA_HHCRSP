@@ -122,11 +122,14 @@ def saveList(filename, data, fileMethod=open):
 #     leadingZeros = '0' * (length - len(generated)) + generated
 #     return map(int, leadingZeros)
 
-def randomGene(n, v):
+def randomGene(config):
     '''  
     
     '''
-    return [random.uniform(1, v-1) for _ in range(n)]
+    hhcrsp = config['hhcrsp']
+    n = hhcrsp.numActivities
+    v = hhcrsp.numShifts
+    return [random.uniform(1, v + 1 - 1e-10) for _ in range(n)]
 
 def median(data, default=0):
     '''
