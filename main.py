@@ -61,8 +61,8 @@ if __name__ == '__main__':
     config['loadData'] = 'hhcrsp/problem.json'
     config['hhcrsp'] = HHCRSP(config)
 
-    config['hhcrsp'].save(0)
-    print str(config['hhcrsp'])
+    # config['hhcrsp'].save(0)
+    # print str(config['hhcrsp'])
     
     config['verbose'] = args.verbose
 

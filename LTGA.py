@@ -323,6 +323,7 @@ class LTGA(object):
             subtrees = self.buildTree(distance)
             masks = ordering(subtrees)
             generator = crossover(masks)
+            print("--> tree", masks)
             individual = generator.next()
             while True:
                 fitness = yield individual
@@ -330,6 +331,7 @@ class LTGA(object):
                     individual = generator.send(fitness)
                 except StopIteration:
                     break
+            print('----- finish 1 round----------------')
             # If all individuals are identical
             currentSet = set(self.individuals)
             if (len(currentSet) == 1 or
