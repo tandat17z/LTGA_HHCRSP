@@ -59,34 +59,35 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = Util.loadConfigurations(args.configs)
     config['hhcrsp'] = HHCRSP(config)
+    config['hhcrsp'].save(0)
+    print str(config['hhcrsp'])
+    # print(str(config['hhcrsp']))
+    # config['verbose'] = args.verbose
 
-    print(str(config['hhcrsp']))
-    config['verbose'] = args.verbose
+    # if 'seed' not in config:
+    #     config['seed'] = random.randint(0, sys.maxint)
+    # random.seed(config['seed'])
 
-    if 'seed' not in config:
-        config['seed'] = random.randint(0, sys.maxint)
-    random.seed(config['seed'])
+    # if args.popSize != None:
+    #     config['popSize'] = args.popSize
 
-    if args.popSize != None:
-        config['popSize'] = args.popSize
+    # if args.dimensions != None:
+    #     config['dimensions'] = args.dimensions
 
-    if args.dimensions != None:
-        config['dimensions'] = args.dimensions
+    # if 'popSize' not in config or args.bisection:
+    #     if args.verbose:
+    #         print 'Using bisection to determine minimum population size'
+    #     Experiments.bisection(config)
 
-    if 'popSize' not in config or args.bisection:
-        if args.verbose:
-            print 'Using bisection to determine minimum population size'
-        Experiments.bisection(config)
+    # try:
+    #     rawResults = Experiments.fullRun(config)
+    #     combinedResults = Experiments.combineResults(rawResults)
 
-    try:
-        rawResults = Experiments.fullRun(config)
-        combinedResults = Experiments.combineResults(rawResults)
+    #     print combinedResults
+    # except KeyError as e:
+    #     print 'You must include a configuration value for', e.args[0]
 
-        print combinedResults
-    except KeyError as e:
-        print 'You must include a configuration value for', e.args[0]
-
-    if args.output_results != None:
-        Util.saveList(args.output_results, [combinedResults] + rawResults)
-    if args.output_config != None:
-        Util.saveConfiguration(args.output_config, config)
+    # if args.output_results != None:
+    #     Util.saveList(args.output_results, [combinedResults] + rawResults)
+    # if args.output_config != None:
+    #     Util.saveConfiguration(args.output_config, config)

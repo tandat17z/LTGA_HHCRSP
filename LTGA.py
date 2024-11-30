@@ -357,10 +357,9 @@ class LTGA(object):
                 if p2 < p1:
                     self.individuals[i] = p2
 
-    # -------------Tính khoảng cách giữa các cluster để build tree------------------------------------------
     def clusterDependencyDistance(self, c1, c2, lookup):
         '''
-        Calculates the true entropic distance between two clusters of genes.
+        Calculates the distance between two clusters of genes.
 
         Parameters:
 
@@ -373,8 +372,11 @@ class LTGA(object):
                 result += self.computeDependencyMeasure(n, m)
         return result
         
-    # --------------Tính dependency measure giữa 2 hoạt động n và m--------------------
+    # -----------------------------------------------
     def computeDependencyMeasure(self, n, m):
+        '''
+        Tinh dependency measure giua 2 activities: n, m
+        '''
         # x_nm > P * pi_nm
         w = self.hhcrsp.w_dependency
         pi = self.calculatePi(n, m)
@@ -396,7 +398,6 @@ class LTGA(object):
                 count += math.comb(len(self.individuals), k) * math.pow(pi_nm, k) * math.pow(1 - pi_nm, len(self.individuals) - k)
             return count
         
-        # Xác suất P(X_nm <= P*pi_nm)
         def calculateP2(self, n, m):
             '''
             probality P(X_nm <= P*pi_nm)
@@ -457,7 +458,7 @@ class LTGA(object):
                 score += q_nm * math.log(q_nm / (q_n * q_m), min_c)
         return score
     
-    # ----------------- Các hàm hỗ trợ tính dependency measure ------------------
+    # ----------------- Cac ham ho tro tinh dependency measure ------------------
     def getSameShiftSchedules(self, n, m):
         '''
         So luong individual ma hoat dong n, m co ca giong nhau
@@ -470,7 +471,7 @@ class LTGA(object):
     
     def calculatePi(self, n, m):
         '''
-        Xác suất pi_nm 2 hoạt độn n và m được xếp chung 1 ca làm việc
+        xac suat pi_nm 2 activities n, m duoc xep chung vao 1 shift
         '''
         c1 = self.hhcrsp.getFeasibleShifts(n)
         c2 = self.hhcrsp.getFeasibleShifts(m) 
