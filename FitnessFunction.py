@@ -335,6 +335,9 @@ class FitnessFunction_HHCRSP(FitnessFunction):
         pass
 
     def evaluate(self, genes):
+        '''
+        djdjdjdd
+        '''
         return sum(genes)
     
     def subProblemsSolved(self, genes):
