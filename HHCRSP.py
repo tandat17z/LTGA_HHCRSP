@@ -1,15 +1,19 @@
 import random
 import json
+import os
 
 class HHCRSP(object):
     def __init__(self, config):
-        if config['loadData']:
-            self.load(config['loadData'])
-            return
-        
         self.numActivities = config['numActivities']
         self.numShifts = config['numShifts']
+
+        id = int(config['problemId'])
+        data_file = self.getDataJsonFile(id)
+        if os.path.exists(data_file):
+            self.load(data_file)
+            return
         
+        #----------------random problem----------------------------------------------------
         THRESHOLD = config['THRESHOLD']
         MAX_D = config['MAX_D']
         MAX_P = config['MAX_P']
@@ -33,6 +37,11 @@ class HHCRSP(object):
         self.lookUpFeasibleShifts = {}
 
         self.w_dependency = config['w_dependency']
+
+        #--------------save problem ----------------------------------------------------------
+        self.save(id)
+        with open(self.getDataTxtFile(id), 'w') as file:
+            file.write(str(self))
 
     def __str__(self):
         s = '--------------DESCRIPTION HHCRSP-----------------------------------\n'
@@ -68,6 +77,13 @@ class HHCRSP(object):
                 shifts.append(v + 1)
         return shifts
     
+    def getDataJsonFile(self, problemId):
+        return 'dataset/hhcrsp_%d_%d_%d.json' % (self.numActivities, self.numShifts, problemId)
+    
+    def getDataTxtFile(self, problemId):
+        return 'dataset/hhcrsp_%d_%d_%d.txt' % (self.numActivities, self.numShifts, problemId)
+    
+    #-----------------------------------------------------------------------------------------------
     def load(self, file_path):
         with open(file_path, "r") as file:
             data = json.load(file)
@@ -85,7 +101,7 @@ class HHCRSP(object):
         self.w_z = data['w_z']
         self.w_dependency = data['w_dependency']
 
-    def save(self, num):
+    def save(self, id):
         data = {
             'N': self.numActivities,
             'V': self.numShifts,
@@ -102,6 +118,6 @@ class HHCRSP(object):
             'w_dependency': self.w_dependency
         }
 
-        output_file = "hhcrsp/problem_%d.json" % num
+        output_file = self.getDataJsonFile(id)
         with open(output_file, "w") as f:
             json.dump(data, f)

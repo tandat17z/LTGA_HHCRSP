@@ -95,11 +95,11 @@ class FitnessFunction_HHCRSP(FitnessFunction):
         for shift in shifts:
             shifts[shift].sort(key=lambda x: x[1])
 
-        if self.config['verbose']:
-            print("--->>> Schedule --------------------------")
-            for shift in shifts:
-                print(shifts[shift])
-            print("------------------------------------------\n")
+        # if self.config['verbose']:
+        #     print("--->>> Schedule --------------------------")
+        #     for shift in shifts:
+        #         print(shifts[shift])
+        #     print("------------------------------------------\n")
         
         # --- Thay doi o day ---
         # num_shifts = len(shifts) + 1  # lay so luong ca truc tu dictionary shifts
@@ -108,9 +108,6 @@ class FitnessFunction_HHCRSP(FitnessFunction):
             first_activity_in_shift = shifts[shift][0][0]  # lay hoat dong dau tien cua moi ca
             # print(first_activity_in_shift)
             t_v0[int(shift)] = max(0, s[first_activity_in_shift] - d[0][first_activity_in_shift]) 
-        # --- ket thuc thay doi ---
-
-
         total_travel_time = 0
         total_overtime = 0
         total_waiting_time = 0
@@ -138,5 +135,5 @@ class FitnessFunction_HHCRSP(FitnessFunction):
             total_overtime += overtime
 
         # tinh gia tri fitness
-        fitness = w_x * total_travel_time + w_y * total_overtime + w_z * total_waiting_time
-        return fitness
+        # fitness = w_x * total_travel_time + w_y * total_overtime + w_z * total_waiting_time
+        return -(w_x * total_travel_time + w_y * total_overtime + w_z * total_waiting_time)

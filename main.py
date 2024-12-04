@@ -36,11 +36,8 @@ parser.add_argument('configs', metavar='Configuration Files',
                     help='One or more json formatted files containing' +
                         ' configuration information')
 
-parser.add_argument('-p', dest='popSize', type=int, default=10,
-                    help='Use specified population size')
-
-parser.add_argument('-b', dest='bisection', action='store_true',
-                    help='Sets population size using bisection')
+parser.add_argument('-i', dest='id', type=int,
+                    help='problem Id')
 
 parser.add_argument('-c', dest='output_config', type=str,
                     help='Outputs a single configuration file containing' +
@@ -52,44 +49,26 @@ parser.add_argument('-v', dest='verbose', action='store_true',
 parser.add_argument('-o', dest='output_results', type=str,
                     help='Specify a file to output the results of this run.')
 
-parser.add_argument('-d', dest='dimensions', type=int,
-                    help='Use the specified number of dimensions.')
-
 if __name__ == '__main__':
     args = parser.parse_args()
+    args.configs.append('experiments/general.cfg')
+    args.configs.append('variants/hhcrsp.cfg')
     config = Util.loadConfigurations(args.configs)
-    config['loadData'] = None #'hhcrsp/problem.json'
-    config['hhcrsp'] = HHCRSP(config)
 
-    # config['hhcrsp'].save(0)
-    # print str(config['hhcrsp'])
-    
+    config['problemId'] = args.verbose
     config['verbose'] = args.verbose
-
-    if 'seed' not in config:
-        config['seed'] = random.randint(0, sys.maxint)
     random.seed(config['seed'])
 
-    if args.popSize != None:
-        config['popSize'] = args.popSize
-
-    # if args.dimensions != None:
-    #     config['dimensions'] = args.dimensions
-
-    # if 'popSize' not in config or args.bisection:
-    #     if args.verbose:
-    #         print 'Using bisection to determine minimum population size'
-    #     Experiments.bisection(config)
-
+    config['hhcrsp'] = HHCRSP(config)
     try:
         rawResults = Experiments.fullRun(config)
-        # combinedResults = Experiments.combineResults(rawResults)
+        combinedResults = Experiments.combineResults(rawResults)
 
-        # print combinedResults
+        print combinedResults
     except KeyError as e:
         print 'You must include a configuration value for', e.args[0]
 
-    # if args.output_results != None:
-    #     Util.saveList(args.output_results, [combinedResults] + rawResults)
-    # if args.output_config != None:
-    #     Util.saveConfiguration(args.output_config, config)
+    if args.output_results != None:
+        Util.saveList(args.output_results, [combinedResults] + rawResults)
+    if args.output_config != None:
+        Util.saveConfiguration(args.output_config, config)

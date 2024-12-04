@@ -41,8 +41,8 @@ def createInitialPopulation(runNumber, evaluator, config):
     '''
     rngState = random.getstate()  # Stores the state of the RNG
     filename = config["initialPopFolder"] + os.sep
-    filename += "%(problem)s_%(numActivities)i_%(numShifts)i_" % config
-    filename += "%i.dat.gz" % runNumber
+    filename += "%(problem)s_%(numActivities)i_%(numShifts)i_%(problemId)i" % config + os.sep
+    filename += "p%i.dat.gz" % runNumber
     try:
         data = Util.loadConfiguration(filename, gzip.open)
     except IOError:
@@ -88,10 +88,7 @@ def createInitialPopulation(runNumber, evaluator, config):
     # Get the last row's information about the population
     total = data[-1]
     random.setstate(rngState)  # Ensures RNG isn't modified by this function
-    return  population, {"LS_iterations": total["iterations"],
-                         "LS_evaluations": total["evaluations"],
-                         "minSubProblem": total['minSubProblem']}
-
+    return  population
 
 def oneRun(runNumber, optimizerClass, evaluator, config):
     '''
@@ -117,13 +114,14 @@ def oneRun(runNumber, optimizerClass, evaluator, config):
       - All configuration information required by ``createInitialPopulation``
         and any required by the ``optimizerClass``.
     '''
-    population, result = createInitialPopulation(runNumber, evaluator, config)
+    population = createInitialPopulation(runNumber, evaluator, config)
+    result = {}
     result["evaluations"] = 0
 
-    if config['verbose']:
-      print('population:')
-      for individual in population:
-          print('\t' + str(individual) )
+    # if config['verbose']:
+    #   print('population:')
+    #   for individual in population:
+    #       print('\t' + str(individual) )
 
     bestFitness = max(population).fitness
     bestIndividual = max(population)
@@ -228,62 +226,62 @@ def combineResults(results):
     return combined
 
 
-def bisection(config):
-    '''
-    Determines the minimum population size for a configuration that acceptably
-    solves the specified problem using bisection.  Starts with a minimum
-    population size of 2, this will double the population size until the
-    success criteria are met.  It will then perform a binary search of the
-    space between the lowest found successful population size and the highest
-    found unsuccessful population size.  Modifies the input configuration
-    dictionary to contain the minimum successful population size found.
+# def bisection(config):
+#     '''
+#     Determines the minimum population size for a configuration that acceptably
+#     solves the specified problem using bisection.  Starts with a minimum
+#     population size of 2, this will double the population size until the
+#     success criteria are met.  It will then perform a binary search of the
+#     space between the lowest found successful population size and the highest
+#     found unsuccessful population size.  Modifies the input configuration
+#     dictionary to contain the minimum successful population size found.
 
-    Parameters:
+#     Parameters:
 
-    - ``config``: A dictionary containing all configuration information
-      required to perform bisection.  Should include values for:
+#     - ``config``: A dictionary containing all configuration information
+#       required to perform bisection.  Should include values for:
 
-      - ``bisectionRuns``: The number of runs to use a given population size in
-        order to determine if it is successful.
-      - ``problem``: The problem being solved, for instance ``DeceptiveTrap``,
-        ``DeceptiveStepTrap`` or ``NearestNeighborNK``.
-      - ``bisectionFailureLimit``: The maximum number of times a population
-        size can fail to find the global optimum of a problem before it is
-        marked as unsuccessful.  IE: A failure limit of 1 means it can fail one
-        of the ``bisectionRuns`` without being marked as unsuccessful.
-      - All configuration information required to initialize the
-        ``FitnessFunction.``
-      - All configuration information required by ``oneRun``.
-    '''
-    def canSucceed(config):
-        failures = 0
-        for runNumber in xrange(config["bisectionRuns"]):
-            options = Util.moduleClasses(FitnessFunction)
-            evaluator = options[config["problem"]](config, runNumber)
-            result = oneRun(runNumber, LTGA, evaluator, config)
-            if not result['success']:
-                failures += 1
-                if failures > config['bisectionFailureLimit']:
-                    return False
-        return True
+#       - ``bisectionRuns``: The number of runs to use a given population size in
+#         order to determine if it is successful.
+#       - ``problem``: The problem being solved, for instance ``DeceptiveTrap``,
+#         ``DeceptiveStepTrap`` or ``NearestNeighborNK``.
+#       - ``bisectionFailureLimit``: The maximum number of times a population
+#         size can fail to find the global optimum of a problem before it is
+#         marked as unsuccessful.  IE: A failure limit of 1 means it can fail one
+#         of the ``bisectionRuns`` without being marked as unsuccessful.
+#       - All configuration information required to initialize the
+#         ``FitnessFunction.``
+#       - All configuration information required by ``oneRun``.
+#     '''
+#     def canSucceed(config):
+#         failures = 0
+#         for runNumber in xrange(config["bisectionRuns"]):
+#             options = Util.moduleClasses(FitnessFunction)
+#             evaluator = options[config["problem"]](config, runNumber)
+#             result = oneRun(runNumber, LTGA, evaluator, config)
+#             if not result['success']:
+#                 failures += 1
+#                 if failures > config['bisectionFailureLimit']:
+#                     return False
+#         return True
 
-    least, most = 0, 1
-    while True:
-        least = most
-        most *= 2
-        config['popSize'] = most
-        if config['verbose']:
-            print 'Trying population size', config['popSize']
-        if canSucceed(config):
-            break
-    while least + 1 < most:
-        config['popSize'] = (most + least) / 2
-        if config['verbose']:
-            print 'Trying population size', config['popSize']
-        if canSucceed(config):
-            most = config['popSize']
-        else:
-            least = config['popSize']
-    config['popSize'] = most
-    if config['verbose']:
-        print 'Bisection set population size as', config['popSize']
+#     least, most = 0, 1
+#     while True:
+#         least = most
+#         most *= 2
+#         config['popSize'] = most
+#         if config['verbose']:
+#             print 'Trying population size', config['popSize']
+#         if canSucceed(config):
+#             break
+#     while least + 1 < most:
+#         config['popSize'] = (most + least) / 2
+#         if config['verbose']:
+#             print 'Trying population size', config['popSize']
+#         if canSucceed(config):
+#             most = config['popSize']
+#         else:
+#             least = config['popSize']
+#     config['popSize'] = most
+#     if config['verbose']:
+#         print 'Bisection set population size as', config['popSize']

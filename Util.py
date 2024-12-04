@@ -100,6 +100,10 @@ def saveList(filename, data, fileMethod=open):
     - ``fileMethod``: Handler to use to open the file.  Defaults to regular
       open.
     '''
+    directory = os.path.dirname(filename)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     with fileMethod(filename, 'w') as f:
         f.write('[' + os.linesep)
         for lineNumber, line in enumerate(data):
