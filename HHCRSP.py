@@ -10,21 +10,21 @@ class HHCRSP(object):
         self.numActivities = config['numActivities']
         self.numShifts = config['numShifts']
         
-        threshold = config['THRESHOLD']
-        max_d = config['MAX_D']
-        max_p = config['MAX_P']
+        THRESHOLD = config['THRESHOLD']
+        MAX_D = config['MAX_D']
+        MAX_P = config['MAX_P']
 
-        max_start = config['MAX_START']
-        max_window = config['MAX_WINDOW_SIZE']
-        maxDuration = config['MAX_DURATION']
+        MAX_START = config['MAX_START']
+        MAX_WINDOW = config['MAX_WINDOW_SIZE']
+        MAX_DURATION = config['MAX_DURATION']
 
-        self.matrixQ = [[int(random.random() > threshold) for j in range(self.numShifts)] for i in range(self.numActivities)]
-        self.matrixD = [[random.randint(1, max_d) if i != j else 0 for j in range(self.numActivities)] for i in range(self.numActivities)]
+        self.matrixQ = [[int(random.random() > THRESHOLD) for j in range(self.numShifts + 1)] for i in range(self.numActivities + 1)]
+        self.matrixD = [[random.randint(1, MAX_D) if i != j else 0 for j in range(self.numActivities + 1)] for i in range(self.numActivities + 1)]
 
-        self.tStart = [random.randint(0, max_start) for _ in range(self.numActivities)]
-        self.tEnd = [self.tStart[i] + random.randint(1, max_window) for i in range(self.numActivities)]
-        self.p = [random.randint(1, max_p) for _ in range(self.numActivities)]
-        self.u = [random.randint(1, maxDuration) for _ in range(self.numShifts)]
+        self.tStart = [random.randint(0, MAX_START) for _ in range(self.numActivities + 1)]
+        self.tEnd = [self.tStart[i] + random.randint(1, MAX_WINDOW) for i in range(self.numActivities + 1)]
+        self.p = [random.randint(1, MAX_P) for _ in range(self.numActivities + 1)]
+        self.u = [random.randint(1, MAX_DURATION) for _ in range(self.numShifts + 1)]
 
         self.w_x = config['w_x']
         self.w_y = config['w_y']

@@ -146,8 +146,8 @@ def oneRun(runNumber, optimizerClass, evaluator, config):
                     lookup[key] = fitness
                 result['evaluations'] += 1
 
-            if config['verbose']:
-              print('recombination: ', individual.genes, fitness)
+            # if config['verbose']:
+            #   print('recombination: ', individual.genes, fitness)
 
             if bestFitness < fitness:
                 bestFitness = fitness

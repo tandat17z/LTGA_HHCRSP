@@ -5,7 +5,6 @@ with solvers, as well as the definitions for a few benchmark problems
 import random
 import os
 import math
-import numpy as np
 from Util import binaryCounter, loadConfiguration, saveConfiguration
 
 
@@ -38,9 +37,14 @@ class FitnessFunction(object):
         '''
         raise Exception("Fitness function did not override subProblemsSolved")
 
-class TestFitnessFunction(FitnessFunction):
+
+class FitnessFunction_HHCRSP(FitnessFunction):
     def __init__(self, config, runNumber):
+        self.config = config
         hhcrsp = config['hhcrsp']
+
+        self.numActivities = hhcrsp.numActivities
+        self.numShifts = hhcrsp.numShifts
 
         self.w_x = hhcrsp.w_x
         self.w_y = hhcrsp.w_y
@@ -55,55 +59,56 @@ class TestFitnessFunction(FitnessFunction):
         pass
 
     def evaluate(self, genes):
-        result = self.fitness_function(genes, self.w_x, self.w_y, self.w_z, self.matrixD, self.tStart, self.tEnd, self.u)
+        result = self.fitness_function(genes, self.w_x, self.w_y, self.w_z, self.matrixD, self.tStart, self.tEnd, self.p, self.u)
         return result
     
     def subProblemsSolved(self, genes):
         return [0]
     
-    def fitness_function(p, w_x, w_y, w_z, d, s, e, u):
+    def fitness_function(self, gene, w_x, w_y, w_z, d, s, e, p, u):
         """
-        Tính toán hàm fitness của một lịch trình.
-
         Args:
-            p: Mã hóa lịch trình.
-            w_x: Trọng số của thời gian di chuyển.
-            w_y: Trọng số của thời gian làm thêm.
-            w_z: Trọng số của thời gian chờ đợi.
-            t_v0: Thời gian bắt đầu của mỗi ca trực.
-            d: Ma trận khoảng cách giữa các hoạt động.
-            s: Thời gian bắt đầu sớm nhất của mỗi hoạt động.
-            e: Thời gian kết thúc sớm nhất của mỗi hoạt động.
-            u: Thời gian làm việc tối đa của mỗi ca trực.
+            p: .
+            w_x: weight of travel time.
+            w_y: weight of shift over time.
+            w_z: weight of waiting time.
+            t_v0: Thoi gian bat dau moi ca truc.
+            d: Ma tran khoang cach giua cac hoat dong.
+            s: Thoi gian bat dau som nhat cua moi hoat dong.
+            e: Thoi gian ket thuc du tinh cua moi hoat dong.
+            u: Thoi gian lam viec du tinh cua moi ca truc.
 
         Returns:
-            Giá trị fitness của lịch trình.
+            fitness.
         """
 
-        shifts = {}  # Tạo một dictionary để lưu các hoạt động trong từng ca trực
+        shifts = {}  # tao mot dictionary de luu cac hoat dong trong tung ca truc
 
-        # Giải mã lịch trình
-        for i, activity in enumerate(p):
+        # Giai ma lich trinh
+        for i, activity in enumerate(gene):
             shift = math.floor(activity)
             priority = activity - shift
-            shifts.setdefault(shift, []).append((i, priority))
+            activity_id = i + 1
+            shifts.setdefault(shift, []).append((activity_id, priority))
 
-        # Sắp xếp các hoạt động trong mỗi ca trực theo mức độ ưu tiên tăng dần
+        # sap xep cac hoat dong trong moi ca truc theo muc do uu tien tang dan
         for shift in shifts:
             shifts[shift].sort(key=lambda x: x[1])
 
-        for shift in shifts:
-            print(shifts[shift])
-            print("\n")
+        if self.config['verbose']:
+            print("--->>> Schedule --------------------------")
+            for shift in shifts:
+                print(shifts[shift])
+            print("------------------------------------------\n")
         
-        # --- Thay đổi ở đây ---
-        num_shifts = len(shifts) + 1  # Lấy số lượng ca trực từ dictionary shifts
-        t_v0 = np.zeros(num_shifts)  # Khởi tạo mảng t_v0
+        # --- Thay doi o day ---
+        # num_shifts = len(shifts) + 1  # lay so luong ca truc tu dictionary shifts
+        t_v0 = [0 for _ in range(self.numShifts + 1)] # khoi tao mang t_v0
         for shift in shifts:
-            first_activity_in_shift = shifts[shift][0][0]  # Lấy hoạt động đầu tiên trong ca
-            print(first_activity_in_shift)
-            t_v0[shift] = max(0, s[first_activity_in_shift] - d[0][first_activity_in_shift]) 
-        # --- Kết thúc thay đổi ---
+            first_activity_in_shift = shifts[shift][0][0]  # lay hoat dong dau tien cua moi ca
+            # print(first_activity_in_shift)
+            t_v0[int(shift)] = max(0, s[first_activity_in_shift] - d[0][first_activity_in_shift]) 
+        # --- ket thuc thay doi ---
 
 
         total_travel_time = 0
@@ -111,7 +116,7 @@ class TestFitnessFunction(FitnessFunction):
         total_waiting_time = 0
 
         for shift, activities in shifts.items():
-            start_time = t_v0[shift]
+            start_time = t_v0[int(shift)]
 
             first_activity = activities[0][0]
             activity = first_activity
@@ -119,19 +124,19 @@ class TestFitnessFunction(FitnessFunction):
             arrival_time = max(start_time, s[first_activity] - d[0][first_activity])
 
             for i in range(len(activities)):
-                if i == 1 : continue
+                if i == 0 : continue
                 activity = activities[i-1][0]
                 next_activity = activities[i][0]
 
-                total_travel_time += d[activity][next_activity]
+                total_travel_time += d[activity ][next_activity]
                 arrival_time = max(s[next_activity], arrival_time + p[activity] + d[activity][next_activity])
 
                 wait_time = max(0, arrival_time - d[activity][next_activity] - e[activity])
                 total_waiting_time += wait_time
 
-            overtime = max(0, arrival_time + p[next_activity] + d[next_activity][0] - (start_time + u[shift]))
+            overtime = max(0, arrival_time + p[next_activity] + d[next_activity][0] - (start_time + u[int(shift)]))
             total_overtime += overtime
 
-        # Tính giá trị fitness
+        # tinh gia tri fitness
         fitness = w_x * total_travel_time + w_y * total_overtime + w_z * total_waiting_time
         return fitness
